@@ -1,5 +1,6 @@
 package com.example.android.moviesapp;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,6 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,10 +47,8 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         //Making Adapter witch connect every strings from NUMBER, with correct TextView on movie_poster layout
-        movieGridAdapter = new ArrayAdapter<String>(
+        movieGridAdapter = new ImageAdapter(
                 getActivity(),
-                R.layout.movie_poster,
-                R.id.poster_tex_view,
                 new ArrayList<String>());
         // connect this fragment class with xml file
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
@@ -66,6 +68,24 @@ public class MainActivityFragment extends Fragment {
         fetchMovies.execute("popularity");
     }
 
+    public class ImageAdapter extends ArrayAdapter<String>{
+        public ImageAdapter(Context context,ArrayList<String> images){
+            super(context, 0, images);
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.movie_poster, parent, false);
+            }
+            ImageView view = (ImageView)convertView.findViewById(R.id.poster_image_view);
+            String url = getItem(position);
+            Picasso.with(getContext()).load(url).into(view);
+            return view;
+        }
+    }
+
+
     public class FetchMovies extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchMovies.class.getSimpleName();
@@ -80,7 +100,7 @@ public class MainActivityFragment extends Fragment {
         private String[] getMovieDataFromJson(String jsonString)
                 throws JSONException {
             final String RESULTS = "results";
-            final String POSTER_PATH = "backdrop_path";
+            final String POSTER_PATH = "poster_path";
             //final String TITLE = "title";
             //final String ORIGINAL_TITLE = "original_title";
             //final String RATING = "vote_average";
@@ -96,6 +116,16 @@ public class MainActivityFragment extends Fragment {
             return resultStr;
         }
 
+        private String makePostersURLs (String path) {
+
+
+                final String URL_BASE = "http://image.tmdb.org/t/p/";
+                final String SIZE = "w185/";
+                String url = URL_BASE + SIZE + path;
+                return url;
+
+        }
+
         @Override
         protected String[] doInBackground(String... param) {
 
@@ -108,7 +138,7 @@ public class MainActivityFragment extends Fragment {
                 //construct URL to connect with Movie API
                 final String BASE_URL = "https://api.themoviedb.org/3/discover/movie";
                 final String API_KEY = "api_key";
-                final String YOUR_API_KEY = "!!!PLACE YOUR KEY!!!!";
+                final String YOUR_API_KEY = "!!!!PLACE YOUR KEY HERE!!!!";
                 final String SORT = "sort_by";
                 final String POPULARITY = "popularity.desc";
                 final String RATE = "vote_average.desc";
@@ -164,12 +194,17 @@ public class MainActivityFragment extends Fragment {
                 }
             }
 
+            //Now parse JSON
             try {
-                return getMovieDataFromJson(movieJsonStr);
+               return getMovieDataFromJson(movieJsonStr);
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
             }
+
+
+
+
 
             return null;
         }
@@ -178,7 +213,8 @@ public class MainActivityFragment extends Fragment {
             if (result != null) {
                 movieGridAdapter.clear();
                 for (String moviePoster : result) {
-                    movieGridAdapter.add(moviePoster);
+                    String finalResult = makePostersURLs(moviePoster);
+                    movieGridAdapter.add(finalResult);
                 }
             }
 
