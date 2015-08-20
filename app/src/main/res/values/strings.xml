@@ -6,4 +6,5 @@
     <string name="action_sort">Sort order</string>
     <string name="action_popular">by popularity</string>
     <string name="action_rate">by rate</string>
+    <string name="toast_fail_connect">Unable to connect to internet. \nPlease, check your internet connection.</string>
 </resources>

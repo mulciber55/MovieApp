@@ -20,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -95,7 +96,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        //Making Adapter witch connect every strings from NUMBER, with correct TextView on movie_poster layout
+
         movieGridAdapter = new ImageAdapter(
                 getActivity(),
                 new ArrayList<String>());
@@ -109,7 +110,9 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getActivity(),DetailActivity.class);
-                intent.putExtra("TITLE",movies[position].originalTitle);
+
+                intent.putExtra("TITLE",movies[position].title);
+                intent.putExtra("ORIGINAL_TITLE",movies[position].originalTitle);
                 intent.putExtra("OVERVIEW",movies[position].overview);
                 intent.putExtra("RATE",movies[position].rate);
                 intent.putExtra("RELEASE_DATE",movies[position].releaseDate);
@@ -163,6 +166,7 @@ public class MainActivityFragment extends Fragment {
 
     public class MovieInformation {
         public String originalTitle;
+        public String title;
         public String overview;
         public String rate;
         public String releaseDate;
@@ -185,7 +189,7 @@ public class MainActivityFragment extends Fragment {
                 throws JSONException {
             final String RESULTS = "results";
             final String POSTER_PATH = "poster_path";
-            //final String TITLE = "title";
+            final String TITLE = "title";
             final String ORIGINAL_TITLE = "original_title";
             final String RATING = "vote_average";
             final String RELEASE_DATE = "release_date";
@@ -198,6 +202,7 @@ public class MainActivityFragment extends Fragment {
             for (int i = 0; i < movieArray.length(); i++) {
                 resultStr[i] = movieArray.getJSONObject(i).getString(POSTER_PATH);
                 movies[i] = new MovieInformation();
+                movies[i].title = movieArray.getJSONObject(i).getString(TITLE);
                 movies[i].originalTitle = movieArray.getJSONObject(i).getString(ORIGINAL_TITLE);
                 movies[i].rate = movieArray.getJSONObject(i).getString(RATING);
                 movies[i].releaseDate = movieArray.getJSONObject(i).getString(RELEASE_DATE);
@@ -212,8 +217,7 @@ public class MainActivityFragment extends Fragment {
 
                 final String URL_BASE = "http://image.tmdb.org/t/p/";
                 final String SIZE = "w185/";
-                String url = URL_BASE + SIZE + path;
-                return url;
+                return URL_BASE + SIZE + path;
 
         }
 
@@ -229,14 +233,19 @@ public class MainActivityFragment extends Fragment {
                 //construct URL to connect with Movie API
                 final String BASE_URL = "https://api.themoviedb.org/3/discover/movie";
                 final String API_KEY = "api_key";
-                final String YOUR_API_KEY = "!!!!PLACE YOUR KEY!!!!";
+                final String YOUR_API_KEY = "!!!!PLACE YOUR KEY HERE!!!!!!!!!";
                 final String SORT = "sort_by";
-                //final String POPULARITY = "popularity.desc";
+                final String VOTE_COUNT = "vote_count.gte";
                 final String RATE = "vote_average.desc";
+                final String COUNT;
+                if(sort[0].equals("popularity.desc")){
+                COUNT = "0";}
+                else {COUNT = "400";}
 
                 Uri builtUri = Uri.parse(BASE_URL).buildUpon()
                         .appendQueryParameter(API_KEY, YOUR_API_KEY)
                         .appendQueryParameter(SORT, sort[0])
+                        .appendQueryParameter(VOTE_COUNT,COUNT)
                         .build();
                 URL url = new URL(builtUri.toString());
 
@@ -249,6 +258,7 @@ public class MainActivityFragment extends Fragment {
                 InputStream inputStream = urlConnection.getInputStream();
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
+
                     return null;
                 }
 
@@ -270,6 +280,13 @@ public class MainActivityFragment extends Fragment {
                 movieJsonStr = buffer.toString();
 
             } catch (IOException e) {
+                final String toast = getActivity().getString(R.string.toast_fail_connect);
+                getActivity().runOnUiThread(new Runnable(){
+                    @Override
+                    public void run() {
+                        Toast.makeText(getActivity(), toast, Toast.LENGTH_LONG).show();
+                    }
+                });
                 Log.e(LOG_TAG, "Error ", e);
                 return null;
             } finally {
