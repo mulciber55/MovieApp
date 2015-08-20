@@ -1,6 +1,7 @@
 package com.example.android.moviesapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -33,12 +35,7 @@ import java.util.ArrayList;
 public class MainActivityFragment extends Fragment {
 
     ArrayAdapter<String> movieGridAdapter;
-    static final String[] NUMBERS = new String[]{
-            "A", "B", "C", "D", "E",
-            "F", "G", "H", "I", "J",
-            "K", "L", "M", "N", "O",
-            "P", "Q", "R", "S", "T",
-            "U", "V", "W", "X", "Y", "Z"};
+    MovieInformation[] movies = new MovieInformation[20];
 
     public MainActivityFragment() {
     }
@@ -56,6 +53,19 @@ public class MainActivityFragment extends Fragment {
         GridView gridView = (GridView) rootView.findViewById(R.id.main_grid_view);
         //set Adapter on gridView
         gridView.setAdapter(movieGridAdapter);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getActivity(),DetailActivity.class);
+                intent.putExtra("TITLE",movies[position].originalTitle);
+                intent.putExtra("OVERVIEW",movies[position].overview);
+                intent.putExtra("RATE",movies[position].rate);
+                intent.putExtra("RELEASE_DATE",movies[position].releaseDate);
+                intent.putExtra("POSTER",movies[position].posterURL);
+                startActivity(intent);
+
+            }
+        });
 
 
         return rootView;
@@ -68,21 +78,31 @@ public class MainActivityFragment extends Fragment {
         fetchMovies.execute("popularity");
     }
 
-    public class ImageAdapter extends ArrayAdapter<String>{
-        public ImageAdapter(Context context,ArrayList<String> images){
+    public class ImageAdapter extends ArrayAdapter<String> {
+        public ImageAdapter(Context context, ArrayList<String> images) {
             super(context, 0, images);
         }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
             if (convertView == null) {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.movie_poster, parent, false);
             }
-            ImageView view = (ImageView)convertView.findViewById(R.id.poster_image_view);
+            ImageView view = (ImageView) convertView.findViewById(R.id.poster_image_view);
             String url = getItem(position);
+
             Picasso.with(getContext()).load(url).into(view);
             return view;
         }
+    }
+
+    public class MovieInformation {
+        public String originalTitle;
+        public String overview;
+        public String rate;
+        public String releaseDate;
+        public String posterURL;
     }
 
 
@@ -102,9 +122,10 @@ public class MainActivityFragment extends Fragment {
             final String RESULTS = "results";
             final String POSTER_PATH = "poster_path";
             //final String TITLE = "title";
-            //final String ORIGINAL_TITLE = "original_title";
-            //final String RATING = "vote_average";
-            //final String RELEASE_DATE = "release_date";
+            final String ORIGINAL_TITLE = "original_title";
+            final String RATING = "vote_average";
+            final String RELEASE_DATE = "release_date";
+            final String OVERVIEW = "overview";
 
             JSONObject movieJson = new JSONObject(jsonString);
             JSONArray movieArray = movieJson.getJSONArray(RESULTS);
@@ -112,6 +133,12 @@ public class MainActivityFragment extends Fragment {
             String[] resultStr = new String[20];
             for (int i = 0; i < movieArray.length(); i++) {
                 resultStr[i] = movieArray.getJSONObject(i).getString(POSTER_PATH);
+                movies[i] = new MovieInformation();
+                movies[i].originalTitle = movieArray.getJSONObject(i).getString(ORIGINAL_TITLE);
+                movies[i].rate = movieArray.getJSONObject(i).getString(RATING);
+                movies[i].releaseDate = movieArray.getJSONObject(i).getString(RELEASE_DATE);
+                movies[i].overview = movieArray.getJSONObject(i).getString(OVERVIEW);
+
             }
             return resultStr;
         }
@@ -138,7 +165,7 @@ public class MainActivityFragment extends Fragment {
                 //construct URL to connect with Movie API
                 final String BASE_URL = "https://api.themoviedb.org/3/discover/movie";
                 final String API_KEY = "api_key";
-                final String YOUR_API_KEY = "!!!!PLACE YOUR KEY HERE!!!!";
+                final String YOUR_API_KEY = "!!!!!!PLACE YOUR KEY HERE!!!!";
                 final String SORT = "sort_by";
                 final String POPULARITY = "popularity.desc";
                 final String RATE = "vote_average.desc";
@@ -212,8 +239,9 @@ public class MainActivityFragment extends Fragment {
         protected void onPostExecute(String[] result) {
             if (result != null) {
                 movieGridAdapter.clear();
-                for (String moviePoster : result) {
-                    String finalResult = makePostersURLs(moviePoster);
+                for (int i = 0; i < result.length; i++) {
+                    String finalResult = makePostersURLs(result[i]);
+                    movies[i].posterURL = finalResult;
                     movieGridAdapter.add(finalResult);
                 }
             }
