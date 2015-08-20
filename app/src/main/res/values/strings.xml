@@ -3,4 +3,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_detail">DetailActivity</string>
+    <string name="action_sort">Sort order</string>
+    <string name="action_popular">by popularity</string>
+    <string name="action_rate">by rate</string>
 </resources>

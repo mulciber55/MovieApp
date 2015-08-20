@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_popular"
+        android:title="@string/action_popular"
+        />
+    <item
+        android:id="@+id/action_rate"
+        android:title="@string/action_rate"
+        />
+</menu>

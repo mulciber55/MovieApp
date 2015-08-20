@@ -2,18 +2,24 @@ package com.example.android.moviesapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 
 import com.squareup.picasso.Picasso;
 
@@ -36,9 +42,55 @@ public class MainActivityFragment extends Fragment {
 
     ArrayAdapter<String> movieGridAdapter;
     MovieInformation[] movies = new MovieInformation[20];
+    public String sort;
 
     public MainActivityFragment() {
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
+        inflater.inflate(R.menu.fragment_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_sort) {
+
+            View menuItemView = getActivity().findViewById(R.id.action_sort);
+            PopupMenu popup = new PopupMenu(getActivity(), menuItemView);
+            popup.inflate(R.menu.popup_menu);
+            popup.show();
+            popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                public boolean onMenuItemClick(MenuItem item) {
+
+                    switch (item.getItemId()){
+                        case R.id.action_popular:
+                            sort = "popularity.desc";
+                            FetchMovies fetchMovies = new FetchMovies();
+                            fetchMovies.execute(sort);
+                            return true;
+                        case R.id.action_rate:
+                            sort = "vote_average.desc";
+                            FetchMovies fetchMoviees = new FetchMovies();
+                            fetchMoviees.execute(sort);
+                            return true;
+                    }
+                    return true;
+                }
+            });
+        }
+        return true;
+    }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -74,8 +126,20 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        sort = settings.getString("SORT","popularity.desc");
         FetchMovies fetchMovies = new FetchMovies();
-        fetchMovies.execute("popularity");
+        fetchMovies.execute(sort);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("SORT", sort);
+        // Commit the edits!
+        editor.commit();
     }
 
     public class ImageAdapter extends ArrayAdapter<String> {
@@ -154,7 +218,7 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
-        protected String[] doInBackground(String... param) {
+        protected String[] doInBackground(String... sort) {
 
             //needed references to connect with Movie API
             HttpURLConnection urlConnection = null;
@@ -165,14 +229,14 @@ public class MainActivityFragment extends Fragment {
                 //construct URL to connect with Movie API
                 final String BASE_URL = "https://api.themoviedb.org/3/discover/movie";
                 final String API_KEY = "api_key";
-                final String YOUR_API_KEY = "!!!!!!PLACE YOUR KEY HERE!!!!";
+                final String YOUR_API_KEY = "!!!!PLACE YOUR KEY!!!!";
                 final String SORT = "sort_by";
-                final String POPULARITY = "popularity.desc";
+                //final String POPULARITY = "popularity.desc";
                 final String RATE = "vote_average.desc";
 
                 Uri builtUri = Uri.parse(BASE_URL).buildUpon()
                         .appendQueryParameter(API_KEY, YOUR_API_KEY)
-                        .appendQueryParameter(SORT, POPULARITY)
+                        .appendQueryParameter(SORT, sort[0])
                         .build();
                 URL url = new URL(builtUri.toString());
 
@@ -229,10 +293,6 @@ public class MainActivityFragment extends Fragment {
                 e.printStackTrace();
             }
 
-
-
-
-
             return null;
         }
 
@@ -248,5 +308,6 @@ public class MainActivityFragment extends Fragment {
 
         }
     }
+
 
 }
