@@ -36,9 +36,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-/**
- * A placeholder fragment containing a simple view.
- */
 public class MainActivityFragment extends Fragment {
 
     ArrayAdapter<String> movieGridAdapter;
@@ -51,6 +48,8 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        sort = settings.getString("SORT","popularity.desc");
 
         setHasOptionsMenu(true);
     }
@@ -141,7 +140,6 @@ public class MainActivityFragment extends Fragment {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
         SharedPreferences.Editor editor = settings.edit();
         editor.putString("SORT", sort);
-        // Commit the edits!
         editor.commit();
     }
 
@@ -266,9 +264,6 @@ public class MainActivityFragment extends Fragment {
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
                     buffer.append(line);
                 }
 
@@ -280,6 +275,7 @@ public class MainActivityFragment extends Fragment {
                 movieJsonStr = buffer.toString();
 
             } catch (IOException e) {
+                //Toast when cannot connect with internet
                 final String toast = getActivity().getString(R.string.toast_fail_connect);
                 getActivity().runOnUiThread(new Runnable(){
                     @Override
